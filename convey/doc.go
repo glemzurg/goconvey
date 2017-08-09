@@ -142,7 +142,12 @@ const (
 	// allowing the test to continue past failing So()-assertions.
 	FailureContinues FailureMode = "continue"
 
-	// FailureHalts is the default setting for a top-level Convey()-block
+	// FailureExits is the new default setting for a top-level Convey()-block
+	// and will cause all failing So()-assertions to exit the testing suite,
+	// preserving persitent state for inspection.
+	FailureExits FailureMode = "exit"
+
+	// FailureHalts is the original default setting for a top-level Convey()-block
 	// and will cause all failing So()-assertions to halt further execution
 	// in that test-arm and continue on to the next arm.
 	FailureHalts FailureMode = "halt"
@@ -160,7 +165,7 @@ func (f FailureMode) combine(other FailureMode) FailureMode {
 	return other
 }
 
-var defaultFailureMode FailureMode = FailureHalts
+var defaultFailureMode FailureMode = FailureExits
 
 // SetDefaultFailureMode allows you to specify the default failure mode
 // for all Convey blocks. It is meant to be used in an init function to

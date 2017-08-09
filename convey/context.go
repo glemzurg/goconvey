@@ -2,6 +2,7 @@ package convey
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/jtolds/gls"
 	"github.com/smartystreets/goconvey/convey/reporting"
@@ -31,7 +32,8 @@ const (
 )
 
 const (
-	failureHalt = "___FAILURE_HALT___"
+	failureHalt = "___FAILURE_HALT___" // Halt execution of children and So() in this context.
+	failureExit = "___FAILURE_EXIT___" // Kill testing system so that persistent state can be inspected.
 
 	nodeKey = "node"
 )
@@ -231,9 +233,18 @@ func (ctx *context) conveyInner(situation string, f func(C)) {
 			if problem, ok := problem.(*conveyErr); ok {
 				panic(problem)
 			}
+			
+			// We may want this system to kill execution on a failure (so database can be inspected).
+			if problem == failureExit {
+				// Report the details of the failure then exit.
+				ctx.reporter.EndStory()
+				os.Exit(1)
+			}
+
 			if problem != failureHalt {
 				ctx.reporter.Report(reporting.NewErrorReport(problem))
 			}
+
 		} else {
 			for _, child := range ctx.children {
 				if !child.complete {
@@ -268,5 +279,8 @@ func (ctx *context) assertionReport(r *reporting.AssertionResult) {
 	ctx.reporter.Report(r)
 	if r.Failure != "" && ctx.failureMode == FailureHalts {
 		panic(failureHalt)
+	}
+	if r.Failure != "" && ctx.failureMode == FailureExits {
+		panic(failureExit)
 	}
 }
